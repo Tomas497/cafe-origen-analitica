@@ -66,3 +66,18 @@ module.exports = {
   ventasPorCiudad,
 };
 
+function totalVendidoM(ventas){
+    return ventas.reduce((total, venta) => total + valorVenta(venta), 0);
+}
+
+function unidadesVendidasM(ventas){
+    return ventas.reduce((total,venta) => total + venta.cantidad, 0);
+}
+
+function ventasPorCiudad(ventas, ciudad){
+    const busca = normalizarTexto(ciudad);
+    return ventas
+        .filter(venta => normalizarTexto(venta.ciudad === busca))
+        .reduce((total, venta) => total + venta.cantidad * venta.precio, 0);
+}
+
