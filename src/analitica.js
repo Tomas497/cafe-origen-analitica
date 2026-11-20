@@ -2,7 +2,7 @@ function valorVenta(venta) {
   return venta.cantidad * venta.precio;
 }
 
-function totalVendido(venta){
+function totalVendido(ventas){
     let total = 0;
     for (const venta of ventas){
         total += valorVenta(venta);
@@ -56,15 +56,15 @@ function ventasPorCiudad(ventas, ciudad) {
   }
   return total;
 }
+//-------------------------------------
 
-module.exports = {
-  valorVenta,
-  totalVendido,
-  unidadesVendidas,
-  ventaMayor,
-  ticketPromedio,
-  ventasPorCiudad,
-};
+function normalizarTexto(texto) {
+  return texto.trim().toLowerCase();
+}
+
+function esVentaValida(venta) {
+  return venta.cantidad > 0;
+}
 
 function totalVendidoM(ventas){
     return ventas.reduce((total, venta) => total + valorVenta(venta), 0);
@@ -81,3 +81,11 @@ function ventasPorCiudad(ventas, ciudad){
         .reduce((total, venta) => total + venta.cantidad * venta.precio, 0);
 }
 
+module.exports = {
+  valorVenta,
+  totalVendido,
+  unidadesVendidas,
+  ventaMayor,
+  ticketPromedio,
+  ventasPorCiudad,
+};
