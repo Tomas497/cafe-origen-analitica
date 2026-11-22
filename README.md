@@ -1,18 +1,24 @@
 # cafe-origen-analitica
 
-Motor de analítica de ventas para Café Origen (tostadora de café de especialidad, Medellín).
-Desarrollado por Nodo Digital.
+Motor de analitica de ventas para Cafe Origen, una tostadora de cafe de especialidad de Medellin. Lo hago como parte del trabajo con Nodo Digital.
 
-## Estructura
-- `src/datos.js`: historial de ventas como arreglo de objetos.
-- `src/analitica.js`: funciones de análisis (en construcción).
-- `src/explorar.js`: script de exploración de los datos.
-- `bitacora.md`: planes, pruebas y decisiones.
+## Que hay en el proyecto
 
-## Uso
+- `src/datos.js`: las 12 ventas como un arreglo de objetos
+- `src/analitica.js`: las funciones de analisis (con ciclos y con metodos de arreglo)
+- `src/explorar.js`: muestra como son los datos
+- `src/pruebas.js`: pruebas de las funciones con ciclos (minireto 2)
+- `src/verificar.js`: compara cada ciclo con su version con metodos (minireto 3)
+- `bitacora.md`: mis planes, pruebas y decisiones
+
+## Como correrlo
+
 ```bash
 node src/explorar.js
+node src/pruebas.js
+node src/verificar.js
 ```
 
 ## Estado
-v0.1 en progreso: MiniReto 1 (modelado y exploración de datos).
+
+Voy en el minireto 3: indicadores con ciclos, versiones con metodos de arreglo, totales por ciudad y top de productos.
