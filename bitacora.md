@@ -273,3 +273,23 @@ corri `node src/reporte.js` y salen las cuatro secciones y los dos resumenes de 
 - dia sin ventas (2026-09-07): "No hubo ventas este dia." y todo en cero
 
 tambien volvi a correr `node src/verificar.js` y `node src/pruebas.js` para confirmar que lo de los minireto anteriores sigue bien.
+
+## minireto 5: contar operaciones
+
+### como cuento las operaciones
+
+- totalVendido: 1 por cada venta que visito
+- ventaMayor: 1 por visitar la venta y 1 por compararla con la mayor
+- totalPorCiudad: 1 por visitar la venta y 1 por preguntar si la ciudad ya esta en el objeto
+- primeraVenta: 1 en total, sin importar el tamano del arreglo
+
+### prediccion antes de medir
+
+si n se multiplica por 10:
+
+- totalVendido: las operaciones se multiplican por 10, porque hace una operacion por cada venta
+- ventaMayor: tambien por 10. hace el doble de operaciones que totalVendido, pero ese doble tambien se multiplica por 10
+- totalPorCiudad: tambien por 10, por lo mismo que ventaMayor
+- primeraVenta: no cambia, siempre hace una sola operacion
+
+con n = 100 espero unas 100 operaciones en totalVendido, unas 200 en ventaMayor y totalPorCiudad, y 1 en primeraVenta.
