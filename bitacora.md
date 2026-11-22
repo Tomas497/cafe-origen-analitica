@@ -293,3 +293,37 @@ si n se multiplica por 10:
 - primeraVenta: no cambia, siempre hace una sola operacion
 
 con n = 100 espero unas 100 operaciones en totalVendido, unas 200 en ventaMayor y totalPorCiudad, y 1 en primeraVenta.
+
+### resultados de medir.js
+
+antes de medir revise el generador: para n = 1, 10, 100 y 1000 devuelve exactamente n ventas, todas validas (cantidad entre 1 y 5), y nunca mas de n/3 clientes distintos. tambien revise que las versiones que cuentan dan el mismo resultado que las originales (los tres dieron OK).
+
+operaciones por tamano:
+
+| n | totalVendido | ventaMayor | totalPorCiudad | primeraVenta |
+|---|--------------|------------|----------------|--------------|
+| 100 | 100 | 200 | 200 | 1 |
+| 1.000 | 1.000 | 2.000 | 2.000 | 1 |
+| 10.000 | 10.000 | 20.000 | 20.000 | 1 |
+| 100.000 | 100.000 | 200.000 | 200.000 | 1 |
+
+cuantas veces crecen las operaciones cuando n se multiplica por 10:
+
+| cambio | totalVendido | ventaMayor | totalPorCiudad | primeraVenta |
+|--------|--------------|------------|----------------|--------------|
+| 100 a 1.000 | 10 | 10 | 10 | 1 |
+| 1.000 a 10.000 | 10 | 10 | 10 | 1 |
+| 10.000 a 100.000 | 10 | 10 | 10 | 1 |
+
+### comparacion con mi prediccion
+
+acerte. las tres funciones con ciclo crecen exactamente 10 veces cuando n crece 10 veces, y primeraVenta se queda en 1. con n = 100 las cantidades fueron las que esperaba: 100, 200, 200 y 1. lo unico que cuenta es que ventaMayor y totalPorCiudad hacen el doble que totalVendido porque en cada venta cuento dos operaciones, pero eso no cambia como crecen.
+
+### clasificacion big o
+
+- totalVendido: O(n). el codigo tiene un solo ciclo que pasa una vez por cada venta. los numeros lo confirman: 100.000 operaciones con n = 100.000
+- ventaMayor: O(n). tambien un solo ciclo. hace 2 operaciones por venta, o sea 2n, y en Big O las constantes se quitan, entonces queda O(n). los numeros: 200.000 con n = 100.000 y crece 10 veces cuando n crece 10 veces
+- totalPorCiudad: O(n). un solo ciclo con 2n operaciones. buscar la ciudad dentro del objeto no recorre nada, es una consulta directa, por eso no agrega otro ciclo
+- primeraVenta: O(1). siempre hace una operacion, con n = 100 o con n = 100.000 da 1
+
+ninguna salio O(n al cuadrado) porque ninguna tiene un ciclo dentro de otro ciclo. la que si lo tiene viene en el siguiente minireto.
