@@ -87,7 +87,7 @@ function ventasPorCiudadM(ventas, ciudad) {
     .reduce((total, valor) => total + valor, 0);
 }
 
-// objeto como diccionario: la clave es la ciudad y el valor es lo que se vendio ahi
+// objeto como diccionario, la clave es la ciudad y el valor es lo que se vendio ahi
 function totalPorCiudad(ventas) {
   return ventas.reduce((grupos, venta) => {
     const limpia = normalizarTexto(venta.ciudad);
@@ -118,6 +118,13 @@ function topProductosPorValor(ventas, k) {
     .map(([producto, total]) => ({ producto, total }));
 }
 
+// devuelve solo las ventas de una fecha
+// si ese dia no hubo ventas devuelve un arreglo vacio, no falla
+function ventasDelDia(ventas, fecha) {
+  const buscada = fecha.trim();
+  return ventas.filter((venta) => venta.fecha === buscada);
+}
+
 module.exports = {
   valorVenta,
   totalVendido,
@@ -131,4 +138,5 @@ module.exports = {
   totalPorCiudad,
   unidadesPorProducto,
   topProductosPorValor,
+  ventasDelDia,
 };
