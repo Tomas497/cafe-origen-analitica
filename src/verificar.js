@@ -12,7 +12,7 @@ const {
 } = require("./analitica");
 
 function comparar(nombre, conCiclo, conMetodo) {
-  const estado = conCiclo === conMetodo ? "Ok" : "Diferente";
+  const estado = conCiclo === conMetodo ? "OK" : "DIFERENTE";
   console.log(estado.padEnd(10), nombre, "| ciclo:", conCiclo, "| metodo:", conMetodo);
 }
 
@@ -40,4 +40,4 @@ console.log("top 3 por valor:", topProductosPorValor(ventas, 3));
 
 // despues de ordenar, ventas tiene que seguir igual
 const ids = ventas.map((venta) => venta.id).join(",");
-console.log("orden de ventas:", ids === "1,2,3,4,5,6,7,8,9,10,11,12" ? "Ok" : "Diferente", "(" + ids + ")");
+console.log("orden de ventas:", ids === "1,2,3,4,5,6,7,8,9,10,11,12" ? "OK" : "DIFRENTE", "(" + ids + ")");

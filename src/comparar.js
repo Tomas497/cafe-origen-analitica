@@ -3,7 +3,7 @@ const { totalCiudadCadena, totalCiudadUnaPasada } = require("./analitica");
 const { generarVentas } = require("./generador");
 
 function comparar(nombre, resultadoCadena, resultadoUnaPasada) {
-  const estado = resultadoCadena === resultadoUnaPasada ? "Ok" : "Diferente";
+  const estado = resultadoCadena === resultadoUnaPasada ? "OK" : "DIFERENTE";
   console.log(estado.padEnd(10), nombre.padEnd(18), "cadena:", resultadoCadena, "| una pasada:", resultadoUnaPasada);
 }
 
@@ -51,7 +51,6 @@ for (const n of [10000, 100000, 1000000]) {
 }
 console.table(tabla);
 
-console.log("\n para copiar a la bitacora");
 console.log("| n | cadena (ms) | una pasada (ms) | veces mas lenta la cadena |");
 console.log("|---|-------------|-----------------|---------------------------|");
 for (const fila of tabla) {

@@ -77,7 +77,6 @@ if (estimado100mil < 120000) {
   console.log("\nla estimacion es de dos minutos o mas, no ejecuto 100.000");
 }
 
-// lo mismo en formato para pegar en la bitacora
 console.log("\n--- para copiar a la bitacora ---");
 console.log("| n | tiempo (ms) | veces mas que el anterior |");
 console.log("|---|-------------|---------------------------|");

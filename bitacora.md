@@ -476,7 +476,11 @@ eso no quiere decir que tarden lo mismo. la cadena hace mas trabajo por cada ven
 
 repeti cada medicion 5 veces y me quedo con la menor, con una corrida de calentamiento antes.
 
-pega aqui la tabla que imprimio comparar.js
+| n | cadena (ms) | una pasada (ms) | veces mas lenta la cadena |
+|---|-------------|-----------------|---------------------------|
+| 10000 | 0.6 | 0.22 | 2.7 |
+| 100000 | 10.45 | 3.34 | 3.1 |
+| 1000000 | 146.24 | 29.59 | 4.9 |
 
 la cadena es mas lenta que la de una pasada en todos los tamanos. cuando n se multiplica por 10, el tiempo de la una pasada se multiplica por cerca de 10. el de la cadena se multiplica por 10 o un poco mas. creo que es porque crear arreglos tan grandes gasta memoria y despues el computador tiene que limpiarla, y eso agrega tiempo. aun asi las dos siguen siendo lineales.
 
