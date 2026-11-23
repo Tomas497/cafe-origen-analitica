@@ -205,6 +205,7 @@ corri `node src/verificar.js` y los 12 pares ciclo/metodo salieron OK (arreglo c
 - top 3 por valor: huila 294000, sierra 225000, prensa francesa 190000
 - el orden de ventas sigue del 1 al 12 despues de llamar a todo
 
+---
 
 ## minireto 4: el primer reporte (v0.1)
 
@@ -274,6 +275,8 @@ corri `node src/reporte.js` y salen las cuatro secciones y los dos resumenes de 
 
 tambien volvi a correr `node src/verificar.js` y `node src/pruebas.js` para confirmar que lo de los minireto anteriores sigue bien.
 
+---
+
 ## minireto 5: contar operaciones
 
 ### como cuento las operaciones
@@ -327,3 +330,187 @@ acerte. las tres funciones con ciclo crecen exactamente 10 veces cuando n crece 
 - primeraVenta: O(1). siempre hace una operacion, con n = 100 o con n = 100.000 da 1
 
 ninguna salio O(n al cuadrado) porque ninguna tiene un ciclo dentro de otro ciclo. la que si lo tiene viene en el siguiente minireto.
+
+---
+
+## minireto 6: el reporte que se volvio lento
+
+### revision de la funcion
+
+agregue clientesRecurrentes a analitica.js tal como la escribio el companero. con los 12 datos del dia 1 devuelve C01, C02 y C03 (corri `node src/tiempos.js` y sale al principio). tiene sentido: C01 compro 3 veces, C02 y C03 dos veces, y los demas una sola vez.
+
+### traza con 5 ventas
+
+use las primeras 5 ventas del dia 1. los clientes, en las posiciones 0 a 4, son C01, C02, C03, C01 y C04.
+
+| i | j | cliente de i | cliente de j | son iguales | que pasa |
+|---|---|--------------|--------------|-------------|----------|
+| 0 | 1 | C01 | C02 | no | nada |
+| 0 | 2 | C01 | C03 | no | nada |
+| 0 | 3 | C01 | C01 | si | recurrentes esta vacio, entonces agrego C01 |
+| 0 | 4 | C01 | C04 | no | nada |
+| 1 | 2 | C02 | C03 | no | nada |
+| 1 | 3 | C02 | C01 | no | nada |
+| 1 | 4 | C02 | C04 | no | nada |
+| 2 | 3 | C03 | C01 | no | nada |
+| 2 | 4 | C03 | C04 | no | nada |
+| 3 | 4 | C01 | C04 | no | nada |
+
+hace 10 comparaciones y el resultado es [C01].
+
+generalizacion: la primera venta se compara con las n - 1 que le siguen, la segunda con n - 2, y asi hasta la ultima, que no se compara con ninguna. la suma es (n - 1) + (n - 2) + ... + 1 = n x (n - 1) / 2. con n = 5 son 10, con n = 12 son 66 y con n = 1000 son 499.500. como n x (n - 1) / 2 crece como n al cuadrado, la funcion es O(n²).
+
+### tiempos
+
+para medir uso console.time y console.timeEnd. antes de medir hago una corrida de calentamiento, y cada tamano lo mido 3 veces y me quedo con el menor tiempo, para que otros procesos del computador no distorsionen el resultado.
+
+| n | tiempo (ms) | veces mas que el anterior |
+|---|-------------|---------------------------|
+| 1000 | 3.58 | |
+| 2000 | 15.81 | 4.41 |
+| 4000 | 66.83 | 4.23 |
+| 8000 | 295.19 | 4.42 |
+| 16000 | 1245.55 | 4.22 |
+
+### analisis de la tabla
+
+cuando n se duplica, el tiempo se multiplica aproximadamente por 4. en mi tabla la columna "veces mas que el anterior" va entre 4,22 y 4,42. no sale exacto porque el computador tiene otros procesos y porque los datos son al azar.
+
+esto es lo que se espera de O(n²): si n pasa a 2n, las comparaciones pasan de n x n / 2 a (2n) x (2n) / 2, que es 4 veces mas. si la funcion fuera lineal, O(n), al duplicar n el tiempo solo se duplicaria. mi tabla se parece a lo cuadratico, no a lo lineal.
+
+### estimaciones
+
+si n se multiplica por k, el tiempo se multiplica por k al cuadrado.
+
+- para 100.000: n pasa de 16.000 a 100.000, o sea 6,25 veces mas. el tiempo se multiplica por 6,25 x 6,25 = 39,06. estimacion = tiempo de n = 16.000 x 39,06
+- para 1.000.000: n es 62,5 veces mas que 16.000. el tiempo se multiplica por 62,5 x 62,5 = 3.906,25. estimacion = tiempo de n = 16.000 x 3.906,25
+
+resultados que imprimio tiempos.js, con la medicion de n = 16.000:
+
+- estimacion para 100.000 ventas: 48,7 segundos (0,8 minutos)
+- estimacion para 1.000.000 ventas: 4.865 segundos (81,1 minutos)
+
+como la estimacion para 100.000 dio menos de dos minutos, la ejecute de verdad:
+
+- tiempo real con 100.000 ventas: 106,9 segundos (1,8 minutos)
+- estimacion para 1.000.000 usando esa medicion: 10.690 segundos (178,2 minutos, casi 3 horas)
+
+la estimacion y lo real no coinciden exacto: estime 48,7 segundos y tardo 106,9, mas del doble. la formula del cuadrado da una idea del orden de magnitud, pero en la realidad el tiempo crece un poco mas rapido. creo que se debe a que con muchos mas datos el computador usa mas memoria, y a que includes tiene mas trabajo cuando hay mas clientes recurrentes. por eso la estimacion de 1.000.000 que sale del dato real de 100.000 es mas confiable que la que sale de 16.000.
+
+### costo oculto: includes
+
+`recurrentes.includes(...)` tambien recorre un arreglo: busca el cliente dentro de la lista de recurrentes. esa lista puede llegar a tener hasta n / 2 clientes, y includes se ejecuta cada vez que dos ventas son del mismo cliente.
+
+en el peor caso esto agrega otro factor de n. por ejemplo: primero hay muchos clientes que compran dos veces, entonces la lista de recurrentes crece mucho. al final hay un cliente con muchisimas compras: cada pareja de sus ventas ejecuta includes, y includes tiene que recorrer la lista larga hasta encontrarlo. con eso el total se puede acercar a n al cubo, que es todavia peor que n al cuadrado.
+
+con datos normales, donde cada cliente compra pocas veces, hay pocas parejas iguales y includes aporta bastante menos, asi que la funcion se queda cerca de n al cuadrado.
+
+lo comprobe con peorCaso.js:
+
+| n | datos normales (ms) | peor caso (ms) |
+|---|---------------------|----------------|
+| 1000 | 5.5 | 30 |
+| 2000 | 18.9 | 277.2 |
+| 4000 | 94 | 2294.9 |
+
+con datos normales, al duplicar n el tiempo se multiplica por 3,44 y luego por 4,97, o sea cerca de 4, como en O(n²). con el peor caso se multiplica por 9,24 y luego por 8,28, o sea cerca de 8 o mas, que es lo que se espera de algo cercano a n al cubo. con n = 4000 el peor caso tardo unas 24 veces mas que los datos normales (2294,9 contra 94), aunque los dos tenian la misma cantidad de ventas.
+
+### conclusion para la gerente
+
+el reporte se pone lento porque, para saber que clientes compraron mas de una vez, el programa compara cada venta con todas las demas. con pocas ventas no se nota, pero cada vez que las ventas se duplican el trabajo se multiplica por cuatro. en mis pruebas, con 1.000 ventas el reporte sale en milisegundos, con 16.000 tarda poco mas de un segundo, con 100.000 ventas tarda casi dos minutos, y con 1.000.000 ventas puede tardar alrededor de tres horas. con las ventas que espera tener Cafe Origen en el marketplace, el reporte no se puede usar tal como esta. la solucion no es comprar un computador mas rapido, sino cambiar la forma en que el programa busca a los clientes repetidos, y eso se puede lograr con un trabajo corto.
+
+---
+
+## minireto 7: tiempo, memoria y cadenas de metodos
+
+### las dos versiones
+
+```
+# totalCiudadCadena, cuatro pasos encadenados
+1. map: normalizo la ciudad de cada venta
+2. filter: dejo solo las de la ciudad buscada
+3. map: calculo el valor de cada una
+4. reduce: sumo los valores
+```
+
+```
+# totalCiudadUnaPasada, un solo ciclo
+buscada = ciudad sin espacios y en minuscula
+total = 0
+para cada venta en ventas:
+    si la ciudad de la venta (sin espacios y en minuscula) es igual a buscada:
+        total = total + valorVenta(venta)
+devolver total
+```
+
+la de una pasada es igual a ventasPorCiudad del minireto 2, solo que la escribi de nuevo para compararla.
+
+### comprobacion
+
+corri `node src/comparar.js`. con los 12 datos del dia 1 las dos dieron 356000 para Medellin (incluyendo la venta escrita "medellín"), tambien con la ciudad escrita "  MEDELLÍN ", con una ciudad que no existe y con el arreglo vacio. con 10.000 ventas del generador las dos devolvieron exactamente el mismo valor en las 6 ciudades (cinco que existen y una que no). todo salio OK.
+
+### recorridos y arreglos nuevos
+
+| version | recorridos | arreglos nuevos | tiempo | espacio |
+|---------|------------|-----------------|--------|---------|
+| cadena | 4 | 3 | O(n) | O(n) |
+| una pasada | 1 | 0 | O(n) | O(1) |
+
+en la cadena:
+- map 1: recorre las n ventas y crea un arreglo nuevo de n objetos (uno por venta, con la ciudad normalizada)
+- filter: recorre esos n y crea un arreglo con las m ventas de la ciudad
+- map 2: recorre las m y crea un arreglo de m numeros
+- reduce: recorre las m y devuelve un solo numero, no crea arreglo
+
+m puede ir de 0 hasta n. en el peor caso, cuando todas las ventas son de esa ciudad, m = n y los cuatro recorridos son de n elementos.
+
+en la de una pasada hay un solo ciclo y solo se guardan dos cosas: la ciudad buscada y el total. no se crea ningun arreglo.
+
+### por que las dos son O(n) en tiempo
+
+la cadena hace n + n + m + m operaciones, y como m nunca es mas que n, son como maximo 4n. en Big O se eliminan las constantes, entonces O(4n) se simplifica a O(n). lo que importa es como crece: si n se multiplica por 10, 4n tambien se multiplica por 10, igual que n en la de una pasada. las dos crecen en linea recta, una con una pendiente mayor que la otra.
+
+eso no quiere decir que tarden lo mismo. la cadena hace mas trabajo por cada venta y se demora mas. el 4 se ignora en la notacion, pero se nota en la tabla de tiempos.
+
+### tiempos medidos
+
+repeti cada medicion 5 veces y me quedo con la menor, con una corrida de calentamiento antes.
+
+pega aqui la tabla que imprimio comparar.js
+
+la cadena es mas lenta que la de una pasada en todos los tamanos. cuando n se multiplica por 10, el tiempo de la una pasada se multiplica por cerca de 10. el de la cadena se multiplica por 10 o un poco mas. creo que es porque crear arreglos tan grandes gasta memoria y despues el computador tiene que limpiarla, y eso agrega tiempo. aun asi las dos siguen siendo lineales.
+
+### complejidad espacial y temporal de todas las funciones del motor
+
+en las funciones que agrupan uso estas letras: c es la cantidad de ciudades distintas, p la de productos distintos y r la de clientes recurrentes.
+
+| funcion | tiempo | espacio | por que |
+|---------|--------|---------|---------|
+| valorVenta | O(1) | O(1) | una multiplicacion |
+| totalVendido | O(n) | O(1) | solo guarda un numero, el total |
+| unidadesVendidas | O(n) | O(1) | solo guarda un numero |
+| ventaMayor | O(n) | O(1) | guarda una referencia a una venta que ya existe, no la copia |
+| ticketPromedio | O(n) | O(1) | guarda dos numeros, total y contador |
+| ventasPorCiudad | O(n) | O(1) | guarda un numero |
+| totalVendidoM | O(n) | O(1) | reduce solo lleva un numero, no crea arreglos |
+| unidadesVendidasM | O(n) | O(1) | igual que la anterior |
+| ventasPorCiudadM | O(n) | O(n) | filter y map crean dos arreglos que pueden tener hasta n elementos |
+| totalPorCiudad | O(n) | O(c) | el objeto tiene una clave por ciudad, no una por venta |
+| unidadesPorProducto | O(n) | O(p) | el objeto tiene una clave por producto |
+| topProductosPorValor | O(n + p log p) | O(p) | agrupa por producto (objeto de p claves), y las copias, el sort y el slice trabajan sobre p parejas, no sobre las ventas |
+| ventasDelDia | O(n) | O(n) | filter crea un arreglo con las ventas del dia, que en el peor caso son todas |
+| clientesRecurrentes | O(n²) | O(r) | la lista de recurrentes puede llegar a n / 2 clientes |
+| totalCiudadCadena | O(n) | O(n) | tres arreglos nuevos y n objetos nuevos |
+| totalCiudadUnaPasada | O(n) | O(1) | guarda un numero |
+
+sobre totalPorCiudad y topProductosPorValor: aunque usan reduce y crean objetos y arreglos, la memoria no depende del numero de ventas sino del numero de grupos. en Cafe Origen hay 4 o 5 ciudades y 5 productos, y eso no crece cuando las ventas pasan de 12 a 1.000.000, asi que en la practica se comportan como memoria constante. solo serian O(n) en el peor caso imaginable, si cada venta tuviera una ciudad o un producto distinto.
+
+en topProductosPorValor tambien se ordena, pero se ordenan los p productos y no las n ventas, por eso el sort cuesta p log p y no n log n.
+
+### decision
+
+dejo totalCiudadUnaPasada en el motor y la cadena solo en el archivo para comparar.
+
+- legibilidad: la cadena se lee como una receta de cuatro pasos (normalizo, filtro, calculo, sumo), y es facil de explicar a otra persona. la de una pasada tambien es corta, un ciclo con un if, y una vez entendido el ciclo no es mas dificil de leer.
+- recursos: el servidor del marketplace tiene memoria limitada. la cadena crea tres arreglos y n objetos nuevos solo para sumar un numero. con 1.000.000 de ventas son millones de objetos. la de una pasada no crea nada y, segun mi tabla, tarda varias veces menos.
+- conclusion: con pocos datos y el codigo que solo yo mantengo, la cadena estaria bien. pero aqui la memoria importa y no hay ninguna ganancia de legibilidad que justifique pagar tanto, asi que elijo la de una pasada.

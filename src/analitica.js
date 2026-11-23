@@ -1,4 +1,3 @@
-// le quita los espacios de los lados y lo pasa a minuscula para poder comparar
 function normalizarTexto(texto) {
   return texto.trim().toLowerCase();
 }
@@ -105,7 +104,6 @@ function unidadesPorProducto(ventas) {
 }
 
 function topProductosPorValor(ventas, k) {
-  // primero sumo el dinero de cada producto
   const totales = ventas.reduce((grupos, venta) => {
     grupos[venta.producto] = (grupos[venta.producto] || 0) + valorVenta(venta);
     return grupos;
@@ -118,11 +116,47 @@ function topProductosPorValor(ventas, k) {
     .map(([producto, total]) => ({ producto, total }));
 }
 
-// devuelve solo las ventas de una fecha
-// si ese dia no hubo ventas devuelve un arreglo vacio, no falla
+// devuelve solo las ventas de una fecha, si ese dia no hubo ventas devuelve un arreglo vacio, no falla
 function ventasDelDia(ventas, fecha) {
   const buscada = fecha.trim();
   return ventas.filter((venta) => venta.fecha === buscada);
+}
+
+// version original del companero, con dos ciclos anidados
+function clientesRecurrentes(ventas) {
+  const recurrentes = [];
+  for (let i = 0; i < ventas.length; i++) {
+    for (let j = i + 1; j < ventas.length; j++) {
+      if (ventas[i].cliente === ventas[j].cliente && !recurrentes.includes(ventas[i].cliente)) {
+        recurrentes.push(ventas[i].cliente);
+      }
+    }
+  }
+  return recurrentes;
+}
+
+// version con cadena de metodos
+function totalCiudadCadena(ventas, ciudad) {
+  const buscada = ciudad.trim().toLowerCase();
+  return ventas
+    .map((venta) => {
+      return { ciudad: venta.ciudad.trim().toLowerCase(), cantidad: venta.cantidad, precio: venta.precio };
+    })
+    .filter((venta) => venta.ciudad === buscada)
+    .map((venta) => venta.cantidad * venta.precio)
+    .reduce((total, valor) => total + valor, 0);
+}
+
+// misma respuesta con un solo ciclo y sin arreglos nuevos
+function totalCiudadUnaPasada(ventas, ciudad) {
+  const buscada = ciudad.trim().toLowerCase();
+  let total = 0;
+  for (const venta of ventas) {
+    if (venta.ciudad.trim().toLowerCase() === buscada) {
+      total += valorVenta(venta);
+    }
+  }
+  return total;
 }
 
 module.exports = {
@@ -139,4 +173,7 @@ module.exports = {
   unidadesPorProducto,
   topProductosPorValor,
   ventasDelDia,
+  clientesRecurrentes,
+  totalCiudadCadena,
+  totalCiudadUnaPasada,
 };
