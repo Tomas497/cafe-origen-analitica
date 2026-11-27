@@ -195,6 +195,79 @@ function clientesRecurrentesMap(ventas) {
   return recurrentes;
 }
 
+// pruebo todos los pares con dos ciclos anidados, O(n^2)
+function comboRegalo(catalogo, valor) {
+  for (let i = 0; i < catalogo.length; i++) {
+    for (let j = i + 1; j < catalogo.length; j++) {
+      if (catalogo[i].precio + catalogo[j].precio === valor) {
+        return [catalogo[i], catalogo[j]];
+      }
+    }
+  }
+  return null;
+}
+
+// con un Map guardo los precios que ya vi
+function comboRegaloMap(catalogo, valor) {
+  const vistos = new Map();
+  for (const producto of catalogo) {
+    const complemento = valor - producto.precio;
+    if (vistos.has(complemento)) {
+      return [vistos.get(complemento), producto];
+    }
+    vistos.set(producto.precio, producto);
+  }
+  return null;
+}
+
+// primero cuento: un Map por ciudad, y dentro otro Map con las veces que aparece cada producto
+// despues me quedo con el mayor de cada ciudad, si hay empate gana el que aparecio primero, porque solo cambio cuando otro lo supera
+function productoEstrellaPorCiudad(ventas) {
+  const porCiudad = new Map();
+  for (const venta of ventas) {
+    if (!ventaValida(venta)) {
+      continue;
+    }
+    const limpia = normalizarTexto(venta.ciudad);
+    const ciudad = limpia.charAt(0).toUpperCase() + limpia.slice(1);
+    if (!porCiudad.has(ciudad)) {
+      porCiudad.set(ciudad, new Map());
+    }
+    const productos = porCiudad.get(ciudad);
+    if (productos.has(venta.producto)) {
+      productos.set(venta.producto, productos.get(venta.producto) + 1);
+    } else {
+      productos.set(venta.producto, 1);
+    }
+  }
+
+  const estrellas = {};
+  for (const [ciudad, productos] of porCiudad) {
+    let mejorProducto = null;
+    let mejorVeces = 0;
+    for (const [producto, veces] of productos) {
+      if (veces > mejorVeces) {
+        mejorProducto = producto;
+        mejorVeces = veces;
+      }
+    }
+    estrellas[ciudad] = { producto: mejorProducto, veces: mejorVeces };
+  }
+  return estrellas;
+}
+
+// primer recorrido, cuento las compras de cada cliente (comprasPorCliente usa un map)
+// segundo recorrido, busco la primera venta cuyo cliente compró una sola vez
+function primerClienteUnico(ventas) {
+  const compras = comprasPorCliente(ventas);
+  for (const venta of ventas) {
+    if (compras.get(venta.cliente) === 1) {
+      return venta.cliente;
+    }
+  }
+  return null;
+}
+
 module.exports = {
   valorVenta,
   totalVendido,
@@ -215,24 +288,9 @@ module.exports = {
   clientesRecurrentesSet,
   comprasPorCliente,
   clientesRecurrentesMap,
+  comboRegalo,
+  comboRegaloMap,
+  productoEstrellaPorCiudad,
+  primerClienteUnico,
 };
 
-console.log(valorVenta,
-  totalVendido,
-  unidadesVendidas,
-  ventaMayor,
-  ticketPromedio,
-  ventasPorCiudad,
-  totalVendidoM,
-  unidadesVendidasM,
-  ventasPorCiudadM,
-  totalPorCiudad,
-  unidadesPorProducto,
-  topProductosPorValor,
-  ventasDelDia,
-  clientesRecurrentes,
-  totalCiudadCadena,
-  totalCiudadUnaPasada,
-  clientesRecurrentesSet,
-  comprasPorCliente,
-  clientesRecurrentesMap)
