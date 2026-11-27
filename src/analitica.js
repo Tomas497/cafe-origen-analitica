@@ -2,13 +2,12 @@ function normalizarTexto(texto) {
   return texto.trim().toLowerCase();
 }
 
-// una venta es valida si vendio al menos una unidad
-function esVentaValida(venta) {
-  return venta.cantidad > 0;
-}
-
 function valorVenta(venta) {
   return venta.cantidad * venta.precio;
+}
+
+function ventaValida(venta) {
+  return venta.cantidad > 0 && venta.precio > 0;
 }
 
 function totalVendido(ventas) {
@@ -27,28 +26,26 @@ function unidadesVendidas(ventas) {
   return unidades;
 }
 
-// devuelve el registro completo de la venta mas grande
-// si no hay ventas validas devuelve null
+// devuelve el registro completo de la venta mas grande, si no hay ventas validas devuelve null
 function ventaMayor(ventas) {
   let mayor = null;
+  let montoMay = !!mayor ? valorVenta(mayor): 0;
+
   for (const venta of ventas) {
-    if (!esVentaValida(venta)) {
-      continue;
-    }
-    if (mayor === null || valorVenta(venta) > valorVenta(mayor)) {
+   const monto = valorVenta(venta);
+    if (monto > montoMay) {
       mayor = venta;
+      montoMay = monto;
     }
-  }
-  return mayor;
+}
+return mayor;
 }
 
-// total entre cantidad de ventas validas
-// si no hay ninguna devuelvo 0 para no dividir entre cero
 function ticketPromedio(ventas) {
   let total = 0;
   let validas = 0;
   for (const venta of ventas) {
-    if (esVentaValida(venta)) {
+    if (ventaValida(venta)) {
       total += valorVenta(venta);
       validas++;
     }
@@ -87,6 +84,7 @@ function ventasPorCiudadM(ventas, ciudad) {
 }
 
 // objeto como diccionario, la clave es la ciudad y el valor es lo que se vendio ahi
+
 function totalPorCiudad(ventas) {
   return ventas.reduce((grupos, venta) => {
     const limpia = normalizarTexto(venta.ciudad);
@@ -122,7 +120,7 @@ function ventasDelDia(ventas, fecha) {
   return ventas.filter((venta) => venta.fecha === buscada);
 }
 
-// version original del companero, con dos ciclos anidados
+// version original del compañero, con dos ciclos anidados
 function clientesRecurrentes(ventas) {
   const recurrentes = [];
   for (let i = 0; i < ventas.length; i++) {
@@ -147,7 +145,6 @@ function totalCiudadCadena(ventas, ciudad) {
     .reduce((total, valor) => total + valor, 0);
 }
 
-// misma respuesta con un solo ciclo y sin arreglos nuevos
 function totalCiudadUnaPasada(ventas, ciudad) {
   const buscada = ciudad.trim().toLowerCase();
   let total = 0;
@@ -157,6 +154,45 @@ function totalCiudadUnaPasada(ventas, ciudad) {
     }
   }
   return total;
+}
+
+// version con dos Set
+function clientesRecurrentesSet(ventas) {
+  const vistos = new Set();
+  const recurrentes = new Set();
+  for (const venta of ventas) {
+    if (vistos.has(venta.cliente)) {
+      recurrentes.add(venta.cliente);
+    } else {
+      vistos.add(venta.cliente);
+    }
+  }
+  return [...recurrentes];
+}
+
+// cuenta cuantas compras hizo cada cliente
+function comprasPorCliente(ventas) {
+  const compras = new Map();
+  for (const venta of ventas) {
+    if (compras.has(venta.cliente)) {
+      compras.set(venta.cliente, compras.get(venta.cliente) + 1);
+    } else {
+      compras.set(venta.cliente, 1);
+    }
+  }
+  return compras;
+}
+
+// los recurrentes son los clientes con dos compras o mas
+function clientesRecurrentesMap(ventas) {
+  const compras = comprasPorCliente(ventas);
+  const recurrentes = [];
+  for (const [cliente, cantidad] of compras) {
+    if (cantidad >= 2) {
+      recurrentes.push(cliente);
+    }
+  }
+  return recurrentes;
 }
 
 module.exports = {
@@ -176,4 +212,27 @@ module.exports = {
   clientesRecurrentes,
   totalCiudadCadena,
   totalCiudadUnaPasada,
+  clientesRecurrentesSet,
+  comprasPorCliente,
+  clientesRecurrentesMap,
 };
+
+console.log(valorVenta,
+  totalVendido,
+  unidadesVendidas,
+  ventaMayor,
+  ticketPromedio,
+  ventasPorCiudad,
+  totalVendidoM,
+  unidadesVendidasM,
+  ventasPorCiudadM,
+  totalPorCiudad,
+  unidadesPorProducto,
+  topProductosPorValor,
+  ventasDelDia,
+  clientesRecurrentes,
+  totalCiudadCadena,
+  totalCiudadUnaPasada,
+  clientesRecurrentesSet,
+  comprasPorCliente,
+  clientesRecurrentesMap)

@@ -337,7 +337,7 @@ ninguna salio O(n al cuadrado) porque ninguna tiene un ciclo dentro de otro cicl
 
 ### revision de la funcion
 
-agregue clientesRecurrentes a analitica.js tal como la escribio el companero. con los 12 datos del dia 1 devuelve C01, C02 y C03 (corri `node src/tiempos.js` y sale al principio). tiene sentido: C01 compro 3 veces, C02 y C03 dos veces, y los demas una sola vez.
+agregue clientesRecurrentes a analitica.js tal como la escribio el companero. con los 12 datos del dia 1 devuelve C01, C02 y C03. tiene sentido: C01 compro 3 veces, C02 y C03 dos veces, y los demas una sola vez.
 
 ### traza con 5 ventas
 
@@ -405,7 +405,7 @@ en el peor caso esto agrega otro factor de n. por ejemplo: primero hay muchos cl
 
 con datos normales, donde cada cliente compra pocas veces, hay pocas parejas iguales y includes aporta bastante menos, asi que la funcion se queda cerca de n al cuadrado.
 
-lo comprobe con peorCaso.js:
+lo comprobe con peorcaso.js:
 
 | n | datos normales (ms) | peor caso (ms) |
 |---|---------------------|----------------|
@@ -518,3 +518,166 @@ dejo totalCiudadUnaPasada en el motor y la cadena solo en el archivo para compar
 - legibilidad: la cadena se lee como una receta de cuatro pasos (normalizo, filtro, calculo, sumo), y es facil de explicar a otra persona. la de una pasada tambien es corta, un ciclo con un if, y una vez entendido el ciclo no es mas dificil de leer.
 - recursos: el servidor del marketplace tiene memoria limitada. la cadena crea tres arreglos y n objetos nuevos solo para sumar un numero. con 1.000.000 de ventas son millones de objetos. la de una pasada no crea nada y, segun mi tabla, tarda varias veces menos.
 - conclusion: con pocos datos y el codigo que solo yo mantengo, la cadena estaria bien. pero aqui la memoria importa y no hay ninguna ganancia de legibilidad que justifique pagar tanto, asi que elijo la de una pasada.
+
+---
+
+## minireto 8: informe de rendimiento (v0.2)
+
+### que hice
+
+- cree `src/rendimiento.js`, que mide las 16 funciones del motor con 10.000 ventas e imprime dos tablas ya en formato markdown: la clasificacion con el tiempo medido, y la proyeccion con 1.000.000 de ventas
+- copie esas dos tablas a `RENDIMIENTO.md` y escribi alrededor el resumen, como se midio, los riesgos y el plan de optimizacion
+
+### decisiones
+
+- incluí las 16 funciones: las del dia 1, clientesRecurrentes, las versiones con metodos y las dos versiones de totalCiudad
+- con 10.000 ventas las funciones lineales tardan menos de un milisegundo y una sola medicion tiene mucho ruido. por eso hago una corrida de calentamiento, repito 15 veces y me quedo con la menor
+- para la proyeccion uso este metodo: 1.000.000 es 100 veces mas que 10.000, entonces una funcion O(n) hace 100 veces mas trabajo, una O(n²) hace 10.000 veces mas y una O(1) hace lo mismo
+- para clientesRecurrentes uso la medicion real de 100.000 ventas del minireto 6 (106,9 segundos x 100 = 178 minutos), porque la formula con 16.000 ventas se quedo corta: estimo 48,7 segundos y tardo 106,9
+- ordene los riesgos primero por como crece el tiempo, despues por memoria extra proporcional a los datos (el servidor del marketplace tiene memoria limitada) y al final por el tiempo proyectado
+- el plan de optimizacion es solo la idea: guardar en un objeto cuantas veces aparece cada cliente y recorrer las ventas una sola vez. lo implemento en el minireto 9
+
+### revision de un companero
+
+le pedi a un companero que leyera RENDIMIENTO.md.
+
+- companero: escribe aqui su nombre
+- observacion 1: escribe aqui lo que te dijo
+- mi respuesta: escribe aqui que hiciste con esa observacion (lo cambie, lo explique mejor, o no lo cambie y por que)
+
+### resumen del dia
+
+- minireto 5: contar operaciones. predije que las funciones con un ciclo crecerian 10 veces cuando n creciera 10 veces y primeraVenta se quedaria en 1, y acerte
+- minireto 6: clientesRecurrentes es O(n²). al duplicar n el tiempo se multiplica por 4. con 100.000 ventas tardo casi dos minutos y con 1.000.000 tardaria unas tres horas
+- minireto 7: la cadena de metodos y la de una pasada son las dos O(n) en tiempo, pero la cadena gasta memoria O(n) y la otra O(1). dejo la de una pasada
+- minireto 8: el unico problema serio de tiempo es clientesRecurrentes. el unico problema de memoria son las funciones que crean arreglos del tamaño de los datos (ventasPorCiudadM, ventasDelDia y totalCiudadCadena)
+- siguiente paso: el minireto 9, que convierte clientesRecurrentes de O(n²) a O(n)
+
+---
+
+## minireto 9: clientes recurrentes en tiempo lineal
+
+el marketplace exige que cualquier reporte responda en menos de un segundo con 100.000 ventas, y el de clientes recurrentes tardaba casi dos minutos. en el plan del minireto 8 ya identifique el trabajo repetido, ahora lo elimino.
+
+### metodo de resolucion
+
+**1. entender el problema**
+
+- entrada: un arreglo de ventas, y de cada venta me importa el cliente
+- salida: un arreglo con los codigos de los clientes que aparecen en dos o mas ventas, cada uno una sola vez
+- restricciones: 100.000 ventas en menos de un segundo, sin modificar el arreglo de ventas, y el orden de la salida no importa
+- lo que cuento como recurrente: un cliente que aparece en dos registros de venta o mas. cuento registros, incluso uno con cantidad 0, igual que la version original, para que las tres versiones den lo mismo
+
+**2. ejemplos y casos borde**
+
+| entrada | salida esperada |
+|---------|-----------------|
+| los 12 datos del dia 1 | C01 (3 compras), C02 (2) y C03 (2) |
+| arreglo vacio | [] |
+| una sola venta | [] |
+| todos los clientes distintos | [] |
+| cinco ventas del mismo cliente C01 | [C01], una sola vez y no cinco |
+| un cliente con 3 compras | aparece una sola vez |
+| un cliente cuya segunda compra es la ultima venta | tiene que aparecer |
+
+**3. fuerza bruta y su complejidad**
+
+es la funcion original del companero:
+
+```
+# clientesRecurrentes
+recurrentes = []
+para cada posicion i de las ventas:
+    para cada posicion j despues de i:
+        si el cliente de i es igual al de j y no esta ya en recurrentes:
+            lo agrego a recurrentes
+devolver recurrentes
+```
+
+hace n x (n - 1) / 2 comparaciones, o sea O(n²), y includes en el peor caso agrega otro factor de n. con 100.000 ventas tardo 106,9 segundos. memoria extra: la lista de recurrentes, O(r).
+
+**4. idea de optimizacion**
+
+el trabajo repetido es que cada venta vuelve a buscar a su cliente entre todas las ventas que siguen, y que includes vuelve a recorrer la lista de recurrentes. lo unico que necesito saber de cada venta es una pregunta: ¿este cliente ya habia aparecido antes? esa pregunta se contesta al instante si guardo los clientes ya vistos en una estructura de busqueda directa, como un Set (has y add tardan casi lo mismo sin importar cuantos elementos tenga). asi alcanza con recorrer las ventas una sola vez.
+
+```
+# clientesRecurrentesSet
+vistos = conjunto vacio
+recurrentes = conjunto vacio
+para cada venta en ventas:
+    si vistos tiene al cliente de la venta:
+        agrego el cliente a recurrentes
+    si no:
+        agrego el cliente a vistos
+devolver recurrentes como arreglo
+```
+
+```
+# comprasPorCliente y clientesRecurrentesMap
+compras = mapa vacio (clave: cliente, valor: numero de compras)
+para cada venta en ventas:
+    si compras tiene al cliente:
+        compras[cliente] = compras[cliente] + 1
+    si no:
+        compras[cliente] = 1
+recurrentes = []
+para cada pareja (cliente, cantidad) en compras:
+    si cantidad es 2 o mas: agrego el cliente a recurrentes
+devolver recurrentes
+```
+
+traza de la version con Set con las 5 ventas del minireto 6 (C01, C02, C03, C01, C04):
+
+| venta | cliente | ya estaba en vistos | vistos queda en | recurrentes queda en |
+|-------|---------|---------------------|-----------------|----------------------|
+| 1 | C01 | no | C01 | vacio |
+| 2 | C02 | no | C01, C02 | vacio |
+| 3 | C03 | no | C01, C02, C03 | vacio |
+| 4 | C01 | si | igual | C01 |
+| 5 | C04 | no | C01, C02, C03, C04 | C01 |
+
+da [C01], igual que la original, pero con 5 pasos en lugar de 10 comparaciones.
+
+**5. implementacion**
+
+agregue a analitica.js las funciones clientesRecurrentesSet, comprasPorCliente y clientesRecurrentesMap. comprasPorCliente devuelve el Map completo (cliente y numero de compras) y clientesRecurrentesMap saca de ahi los que tienen 2 o mas.
+
+**6. pruebas**
+
+la comparacion esta al final de `src/verificar.js` y los tiempos en `src/tiempos.js`.
+
+- con los 12 datos del dia 1 las tres versiones dieron C01, C02 y C03
+- con 5.000 ventas generadas las tres dieron la misma cantidad de clientes y la misma lista (OK en Set y en Map)
+- arreglo vacio y una sola venta: las dos versiones nuevas devuelven []
+- comparo los resultados ordenados porque el orden cambia: la original y la del Map devuelven los clientes en el orden en que aparecieron por primera vez, y la del Set en el orden de su segunda aparicion. son los mismos clientes con distinto orden, y asi `sort()` los deja iguales
+
+### tiempos medidos
+
+repeti cada medicion y me quedo con la menor, con una corrida de calentamiento antes. la original solo la medi con 1.000 y 10.000 ventas, porque con 100.000 tarda casi dos minutos (106,9 segundos en el minireto 6).
+
+pega aqui las dos tablas que imprimio `node src/tiempos.js` en "para copiar a la bitacora": la de tiempos y la de tiempo por venta
+
+analisis:
+
+- la original: al multiplicar n por 10 el tiempo se multiplica por cerca de 100, que es lo que se espera de O(n²). el tiempo por venta se multiplica por 10 cada vez que n se multiplica por 10, o sea que cada venta cuesta mas cuanto mas grande es el conjunto
+- el Set y el Map: el tiempo por venta se queda en el mismo orden aunque n pase de 1.000 a 100.000, nunca se multiplica por 10. eso es lo que se espera de O(n): cada venta cuesta mas o menos lo mismo sin importar cuantas haya. el tiempo total crece aproximadamente con n, nunca cerca de 100 veces como la original. a veces sube algo mas de lo esperado porque con muchos datos hay mas memoria en juego
+- con 100.000 ventas el Set y el Map tardan unas pocas decenas de milisegundos, muy por debajo del segundo que pide el marketplace. el script lo confirma con console.time y los dos salen OK
+- comparado con la original, con 100.000 ventas pasamos de 106,9 segundos a unas decenas de milisegundos
+
+### complejidad de las versiones nuevas
+
+| funcion | tiempo | espacio | por que |
+|---------|--------|---------|---------|
+| clientesRecurrentesSet | O(n) | O(k) | un solo recorrido; has y add tardan casi lo mismo sin importar el tamano. guarda cada cliente distinto en vistos |
+| comprasPorCliente | O(n) | O(k) | un solo recorrido, una clave por cliente distinto |
+| clientesRecurrentesMap | O(n) | O(k) | comprasPorCliente mas un recorrido por los clientes (k es menor o igual que n) |
+
+k es la cantidad de clientes distintos.
+
+### el intercambio entre tiempo y memoria
+
+- se gana tiempo: se pasa de O(n²) a O(n). la pregunta "¿este cliente ya aparecio?" ya no se contesta recorriendo todo, sino con una consulta directa
+- se paga con memoria: la original solo guardaba la lista de recurrentes, O(r). las nuevas guardan a todos los clientes distintos, O(k). en el peor caso, cuando todos los clientes son distintos, k = n y la memoria es O(n)
+- en mis datos generados hay hasta n / 3 clientes distintos. con 1.000.000 de ventas serian unos 333.000 codigos guardados. es bastante mas que la original, pero son textos cortos y el servidor puede con eso, y a cambio el reporte pasa de horas a una fraccion de segundo
+- el Set usa dos colecciones (vistos y recurrentes), el Map usa una sola pero guarda un numero por cliente. como el Map tambien sirve para saber cuantas compras hizo cada cliente, me quedo con clientesRecurrentesMap para el reporte final
+- en resumen: gasto memoria a cambio de no repetir trabajo, y en este problema el cambio vale mucho la pena

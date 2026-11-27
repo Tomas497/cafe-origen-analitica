@@ -1,5 +1,9 @@
 const { ventas } = require("./datos");
+const { generarVentas } = require("./generador");
 const {
+  clientesRecurrentes,
+  clientesRecurrentesSet,
+  clientesRecurrentesMap,
   totalVendido,
   unidadesVendidas,
   ventasPorCiudad,
@@ -40,4 +44,30 @@ console.log("top 3 por valor:", topProductosPorValor(ventas, 3));
 
 // despues de ordenar, ventas tiene que seguir igual
 const ids = ventas.map((venta) => venta.id).join(",");
-console.log("orden de ventas:", ids === "1,2,3,4,5,6,7,8,9,10,11,12" ? "OK" : "DIFRENTE", "(" + ids + ")");
+console.log("orden de ventas:", ids === "1,2,3,4,5,6,7,8,9,10,11,12" ? "OK" : "DIFERENTE", "(" + ids + ")");
+
+function ordenado(lista) {
+  return [...lista].sort();
+}
+
+function iguales(a, b) {
+  return JSON.stringify(ordenado(a)) === JSON.stringify(ordenado(b)); // comprueba si dos arreglos u objetos tienen los mismos datos, sin importar el orden
+
+}
+
+function compararRecurrentes(nombre, datos) {
+  const original = clientesRecurrentes(datos);
+  const conSet = clientesRecurrentesSet(datos);
+  const conMap = clientesRecurrentesMap(datos);
+  console.log("\n clientes recurrentes con", nombre);
+  console.log((iguales(original, conSet) ? "OK" : "DIFERENTE").padEnd(10), "Set | original:", original.length, "| Set:", conSet.length); // rellena con cadenas
+  console.log((iguales(original, conMap) ? "OK" : "DIFERENTE").padEnd(10), "Map | original:", original.length, "| Map:", conMap.length);
+}
+
+console.log("\n clientes recurrentes, datos del dia 1, ordenados");
+console.log("original:", ordenado(clientesRecurrentes(ventas)));
+console.log("Set:     ", ordenado(clientesRecurrentesSet(ventas)));
+console.log("Map:     ", ordenado(clientesRecurrentesMap(ventas)));
+compararRecurrentes("los 12 datos del dia 1", ventas);
+compararRecurrentes("5.000 ventas generadas", generarVentas(5000));
+console.log("\nCasos borde, arreglo vacio:", clientesRecurrentesSet([]), clientesRecurrentesMap([]), "| una sola venta:", clientesRecurrentesSet([ventas[0]]), clientesRecurrentesMap([ventas[0]]));
