@@ -681,3 +681,208 @@ k es la cantidad de clientes distintos.
 - en mis datos generados hay hasta n / 3 clientes distintos. con 1.000.000 de ventas serian unos 333.000 codigos guardados. es bastante mas que la original, pero son textos cortos y el servidor puede con eso, y a cambio el reporte pasa de horas a una fraccion de segundo
 - el Set usa dos colecciones (vistos y recurrentes), el Map usa una sola pero guarda un numero por cliente. como el Map tambien sirve para saber cuantas compras hizo cada cliente, me quedo con clientesRecurrentesMap para el reporte final
 - en resumen: gasto memoria a cambio de no repetir trabajo, y en este problema el cambio vale mucho la pena
+
+## minireto 10: combos de regalo y frecuencias
+
+### catalogo
+
+el catalogo esta en `src/catalogo.js` como arreglo de objetos con producto y precio (8 productos, de 18.000 a 120.000).
+
+### comboRegalo por fuerza bruta
+
+```
+# comboRegalo(catalogo, valor)
+para cada producto i:
+    para cada producto j que viene despues de i:
+        si precio de i + precio de j es igual al valor:
+            devolver los dos productos
+devolver null
+```
+
+complejidad: con n productos prueba n x (n - 1) / 2 pares, o sea O(n²) en tiempo. memoria O(1), no guarda nada.
+
+### version optimizada con Map
+
+la idea: si el valor es 87.000 y el producto cuesta 42.000, le falta 45.000 (el complemento = valor - precio). en vez de buscar ese 45.000 recorriendo otra vez, guardo en un Map los precios que ya vi y le pregunto al Map si ya esta. preguntarle a un Map no recorre nada.
+
+```
+# comboRegaloMap(catalogo, valor)
+vistos = mapa vacio (precio -> producto)
+para cada producto del catalogo:
+    complemento = valor - precio del producto
+    si vistos tiene el complemento:
+        devolver el producto guardado y el actual
+    guardo el precio del producto en vistos
+devolver null
+```
+
+recorre el catalogo una sola vez, O(n) en tiempo, y guarda hasta n precios, O(n) en memoria. guardo el precio despues de preguntar para que un producto no se pueda combinar consigo mismo.
+
+### traza de la version optimizada para 87.000
+
+| paso | producto | precio | complemento (87.000 - precio) | esta en el Map | Map queda en |
+|------|----------|--------|-------------------------------|----------------|--------------|
+| 1 | Origen Nariño 250 g | 26.000 | 61.000 | no | 26.000 |
+| 2 | Origen Huila 500 g | 42.000 | 45.000 | no | 26.000, 42.000 |
+| 3 | Origen Sierra 500 g | 45.000 | 42.000 | si, es Origen Huila 500 g | termina |
+
+devuelve Origen Huila 500 g y Origen Sierra 500 g, en 3 pasos y sin mirar el resto del catalogo.
+
+### pruebas (src/pruebas.js)
+
+- 87.000: Origen Huila 500 g y Origen Sierra 500 g, las dos versiones
+- 61.000: Origen Nariño 250 g y Taza de cerámica, las dos versiones
+- 10.000: null, porque el par mas barato ya suma 44.000
+- casos borde: catalogo vacio da null, un solo producto da null (con 52.000 el Map no usa el mismo producto dos veces)
+
+### productoEstrellaPorCiudad
+
+```
+# productoEstrellaPorCiudad(ventas)
+porCiudad = mapa vacio (ciudad -> otro mapa producto -> veces)
+para cada venta valida:
+    ciudad = nombre de la ciudad normalizado (igual que totalPorCiudad)
+    sumo 1 a las veces de ese producto dentro de esa ciudad
+para cada ciudad:
+    me quedo con el producto que tiene mas veces
+devolver un objeto: ciudad -> producto y veces
+```
+
+regla de desempate: si dos productos aparecen las mismas veces en una ciudad, gana el que aparecio primero en las ventas de esa ciudad. lo logro cambiando de producto solo cuando otro tiene mas veces, no cuando tiene las mismas.
+
+con los datos del dia 1: Medellin Origen Huila 500 g (2), Bogota Origen Nariño 250 g (3), Pereira Origen Huila 500 g (1) y Cali Prensa francesa (1). en Cali hay un empate (cada producto aparece una vez) y gana Prensa francesa porque fue el primero. no cuento la venta del id 8 porque tiene cantidad 0.
+
+### primerClienteUnico
+
+```
+# primerClienteUnico(ventas)
+compras = comprasPorCliente(ventas)       # primer recorrido
+para cada venta en orden:                 # segundo recorrido
+    si compras de ese cliente es 1:
+        devolver ese cliente
+devolver null
+```
+
+con los datos del dia 1 devuelve C04: C01, C02 y C03 repiten, y C04 es el primero que aparece una sola vez (venta id 5). con el arreglo vacio, o si todos repiten, devuelve null.
+
+### complejidad
+
+| funcion | tiempo | espacio | por que |
+|---------|--------|---------|---------|
+| comboRegalo | O(n²) | O(1) | dos ciclos anidados, prueba todos los pares |
+| comboRegaloMap | O(n) | O(n) | un recorrido, consultar y guardar en el Map no recorre nada |
+| productoEstrellaPorCiudad | O(n) | O(c x p) | un recorrido para contar y despues se revisan los conteos de c ciudades por p productos |
+| primerClienteUnico | O(n) | O(k) | dos recorridos (2n, que es O(n)) y un Map con un cliente por clave, k clientes distintos |
+
+las tres funciones optimizadas son O(n). las operaciones de un Map (has, get, set) tardan casi lo mismo sin importar cuantos elementos tenga, por eso cada una de las n vueltas cuesta lo mismo.
+
+## minireto 11: la mejor racha y el presupuesto exacto
+
+### mejorSemanaBruta
+
+```
+# mejorSemanaBruta(dias, k)
+si k es menor que 1 o mayor que los dias, devolver null
+para cada posicion de inicio de una semana:
+    suma = 0
+    para cada uno de los k dias de esa semana: suma = suma + dia
+    si suma es la mayor hasta ahora, la guardo con su dia de inicio
+devolver el total y el dia de inicio
+```
+
+complejidad: hay n - k + 1 semanas y cada una suma k dias, o sea O(n x k). con k = 7 se nota poco, pero si k crece (por ejemplo 1.000) cada semana cuesta 1.000 sumas.
+
+### mejorSemana con ventana deslizante
+
+la idea: dos semanas seguidas comparten k - 1 dias. en vez de sumar todo otra vez, a la suma anterior le sumo el dia que entra y le resto el dia que sale.
+
+```
+# mejorSemana(dias, k)
+si k es menor que 1 o mayor que los dias, devolver null
+suma = suma de los primeros k dias
+mejor = suma
+para cada dia i desde k hasta el final:
+    suma = suma + dia que entra (i) - dia que sale (i - k)
+    si suma es mayor que mejor, la guardo con su dia de inicio
+devolver el total y el dia de inicio
+```
+
+complejidad: la primera suma cuesta k y despues se recorre cada dia una sola vez con una suma y una resta, sea cual sea k. es O(n). memoria O(1).
+
+### las tres primeras posiciones de la ventana (k = 7)
+
+| ventana | dias | como se calcula | total (miles) |
+|---------|------|-----------------|---------------|
+| 1 | 1 al 7 | 320 + 410 + 280 + 390 + 510 + 620 + 700 | 3.230 |
+| 2 | 2 al 8 | 3.230 - 320 (sale el dia 1) + 300 (entra el dia 8) | 3.210 |
+| 3 | 3 al 9 | 3.210 - 410 (sale el dia 2) + 290 (entra el dia 9) | 3.090 |
+
+### resultado con los datos de septiembre
+
+las dos versiones dan lo mismo: la mejor semana de septiembre empieza el dia 24 (del 24 al 30) y suma 3.670 miles de pesos, o sea $ 3.670.000. es la ultima ventana del mes: los totales de las semanas van subiendo casi todo el mes. casos borde: con k = 1 da el mejor dia (720, el dia 28), con k = 30 da todo el mes (14.460) y con k = 31 (mayor que los dias) o sin dias devuelve null. en empate me quedo con la primera semana.
+
+### comparacion con 100.000 dias al azar
+
+con 100.000 dias generados las dos versiones dieron la misma semana, con k = 7 y con k = 1000. tiempos (copiados de la consola):
+
+| k | fuerza bruta (ms) | ventana deslizante (ms) |
+|---|-------------------|-------------------------|
+| 7 | [tu numero] | [tu numero] |
+| 1000 | [tu numero] | [tu numero] |
+
+con k = 7 las dos son muy rapidas, porque cada semana solo suma 7 dias. con k = 1000 la fuerza bruta se vuelve muchisimo mas lenta (hace unas k veces mas trabajo) y la ventana casi no cambia, porque su costo no depende de k. por eso la ventana es O(n) y la bruta O(n x k).
+
+### parMasCercano con dos punteros
+
+la idea: ordeno los productos por precio, pongo un puntero en el mas barato (izquierda) y otro en el mas caro (derecha).
+
+```
+# parMasCercano(catalogo, presupuesto)
+ordenados = copia del catalogo ordenada por precio
+izquierda = 0, derecha = ultimo
+mejor = null
+mientras izquierda sea menor que derecha:
+    suma = precio de izquierda + precio de derecha
+    si la suma se pasa del presupuesto: bajo la derecha
+    si no:
+        si la suma es mayor que la mejor, la guardo
+        subo la izquierda
+devolver mejor
+```
+
+por que se mueve asi: si con el mas barato de la izquierda la suma ya se pasa, con cualquier otro de la izquierda (que cuesta mas) tambien se pasaria, asi que el de la derecha ya no sirve y lo descarto. si la suma cabe, el de la izquierda todavia puede combinarse con uno mas caro, y para buscar una suma mayor subo la izquierda.
+
+### traza de los punteros con presupuesto 100.000
+
+precios ordenados: Filtros 18.000, Nariño 26.000, Taza 35.000, Huila 500 g 42.000, Sierra 45.000, Huila 1 kg 79.000, Prensa 95.000, Molino 120.000.
+
+| paso | izquierda | derecha | suma | que hago |
+|------|-----------|---------|------|----------|
+| 1 | Filtros 18.000 | Molino 120.000 | 138.000 | se pasa, bajo la derecha |
+| 2 | Filtros 18.000 | Prensa 95.000 | 113.000 | se pasa, bajo la derecha |
+| 3 | Filtros 18.000 | Huila 1 kg 79.000 | 97.000 | cabe, es la mejor hasta ahora, la guardo y subo la izquierda |
+| 4 | Nariño 26.000 | Huila 1 kg 79.000 | 105.000 | se pasa, bajo la derecha |
+| 5 | Nariño 26.000 | Sierra 45.000 | 71.000 | cabe pero no mejora 97.000, subo la izquierda |
+| 6 | Taza 35.000 | Sierra 45.000 | 80.000 | cabe, no mejora, subo la izquierda |
+| 7 | Huila 500 g 42.000 | Sierra 45.000 | 87.000 | cabe, no mejora, subo la izquierda |
+| 8 | Sierra 45.000 | Sierra 45.000 | | los punteros se juntan, termino |
+
+resultado: Filtros de papel x100 y Origen Huila 1 kg, que suman 97.000.
+
+### pruebas
+
+- 100.000: Filtros de papel x100 y Origen Huila 1 kg (97.000)
+- 140.000: Origen Sierra 500 g y Prensa francesa (140.000 exactos)
+- 40.000: null, porque el par mas barato (18.000 y 26.000) ya suma 44.000
+- catalogo vacio y un solo producto: null
+- la suma nunca supera el presupuesto y el catalogo no cambia de orden, porque ordeno una copia
+
+### complejidad
+
+| funcion | tiempo | espacio | por que |
+|---------|--------|---------|---------|
+| mejorSemanaBruta | O(n x k) | O(1) | vuelve a sumar los k dias de cada semana |
+| mejorSemana | O(n) | O(1) | una suma inicial y una suma y una resta por cada dia |
+| parMasCercano | O(n log n) | O(n) | ordenar cuesta n log n y los punteros recorren una sola vez (O(n)). la copia ordenada ocupa n. sin el ordenamiento seria O(n) |
+
+el ordenamiento domina: n log n es mayor que n, asi que parMasCercano es O(n log n). si los precios ya llegaran ordenados, los dos punteros solos serian O(n).

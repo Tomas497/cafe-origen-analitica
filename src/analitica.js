@@ -268,6 +268,74 @@ function primerClienteUnico(ventas) {
   return null;
 }
 
+function mejorSemanaBruta(dias, k) {
+  if (k < 1 || k > dias.length) {
+    return null;
+  }
+  let mejorTotal = 0;
+  let mejorInicio = 0;
+  for (let i = 0; i <= dias.length - k; i++) {
+    let suma = 0;
+    for (let j = i; j < i + k; j++) {
+      suma += dias[j];
+    }
+    if (i === 0 || suma > mejorTotal) {
+      mejorTotal = suma;
+      mejorInicio = i;
+    }
+  }
+  return { total: mejorTotal, inicio: mejorInicio + 1 };
+}
+
+// ventana deslizante, sumo la primera semana y despues no vuelvo a sumar todo,
+// al correr la ventana un dia le sumo el dia que entra y le resto el que sale
+// el inicio se devuelve como dia del mes (empieza en 1)
+
+function mejorSemana(dias, k) {
+  if (k < 1 || k > dias.length) {
+    return null;
+  }
+  let suma = 0;
+  for (let i = 0; i < k; i++) {
+    suma += dias[i];
+  }
+  let mejorTotal = suma;
+  let mejorInicio = 0;
+  for (let i = k; i < dias.length; i++) {
+    suma = suma + dias[i] - dias[i - k];
+    if (suma > mejorTotal) {
+      mejorTotal = suma;
+      mejorInicio = i - k + 1;
+    }
+  }
+  return { total: mejorTotal, inicio: mejorInicio + 1 };
+}
+
+// dos punteros sobre los productos ordenados por precio
+// izquierda empieza en el mas barato y derecha en el mas caro
+// si la suma se pasa del presupuesto bajo la derecha, y si cabe la guardo y subo la izquierda
+
+function parMasCercano(catalogo, presupuesto) {
+  const ordenados = [...catalogo].sort((a, b) => a.precio - b.precio);
+  let izquierda = 0;
+  let derecha = ordenados.length - 1;
+  let mejorPar = null;
+  let mejorSuma = 0;
+  while (izquierda < derecha) {
+    const suma = ordenados[izquierda].precio + ordenados[derecha].precio;
+    if (suma > presupuesto) {
+      derecha--;
+    } else {
+      if (suma > mejorSuma) {
+        mejorSuma = suma;
+        mejorPar = [ordenados[izquierda], ordenados[derecha]];
+      }
+      izquierda++;
+    }
+  }
+  return mejorPar;
+}
+
 module.exports = {
   valorVenta,
   totalVendido,
@@ -292,5 +360,8 @@ module.exports = {
   comboRegaloMap,
   productoEstrellaPorCiudad,
   primerClienteUnico,
+  mejorSemanaBruta,
+  mejorSemana,
+  parMasCercano,
 };
 

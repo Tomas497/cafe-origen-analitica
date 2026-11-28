@@ -49,7 +49,7 @@ probar("ventaMayor", ventaMayor([]), null);
 probar("ticketPromedio", ticketPromedio([]), 0);
 probar("ventasPorCiudad", ventasPorCiudad([], "Cali"), 0);
 
-//minireto 10
+// minireto 10
 
 const analitica = require("./analitica");
 const { catalogo } = require("./catalogo");
@@ -84,3 +84,60 @@ console.log("\nPrimer cliente que compro una sola vez");
 probar("datos del dia 1", analitica.primerClienteUnico(ventas), "C04");
 probar("arreglo vacio", analitica.primerClienteUnico([]), null);
 probar("todos repiten", analitica.primerClienteUnico([ventas[0], ventas[3]]), null);
+
+// minireto 11
+const { ventasDiarias } = require("./datos");
+
+// paso el resultado a un texto para poder compararlo con probar
+function semana(resultado) {
+  if (resultado === null) {
+    return null;
+  }
+  return resultado.total + " desde el dia " + resultado.inicio;
+}
+
+console.log("\nMejor semana de septiembre");
+const brutaSeptiembre = analitica.mejorSemanaBruta(ventasDiarias, 7);
+const rapidaSeptiembre = analitica.mejorSemana(ventasDiarias, 7);
+console.log("fuerza bruta:", semana(brutaSeptiembre));
+console.log("ventana deslizante:", semana(rapidaSeptiembre));
+probar("las dos dan lo mismo", semana(rapidaSeptiembre), semana(brutaSeptiembre));
+probar("mejor semana de septiembre", semana(rapidaSeptiembre), "3670 desde el dia 24");
+probar("k = 1, el mejor dia", semana(analitica.mejorSemana(ventasDiarias, 1)), "720 desde el dia 28");
+probar("k = 30, todo el mes", semana(analitica.mejorSemana(ventasDiarias, 30)), "14460 desde el dia 1");
+probar("k mayor que los dias, ventana", semana(analitica.mejorSemana(ventasDiarias, 31)), null);
+probar("k mayor que los dias, fuerza bruta", semana(analitica.mejorSemanaBruta(ventasDiarias, 31)), null);
+probar("sin dias", semana(analitica.mejorSemana([], 7)), null);
+
+// 100000 dias al azar entre 200 y 799
+const diasAlAzar = [];
+for (let i = 0; i < 100000; i++) {
+  diasAlAzar.push(Math.floor(Math.random() * 600) + 200);
+}
+
+console.log("\n100000 dias al azar");
+probar("las dos dan lo mismo con k = 7", semana(analitica.mejorSemana(diasAlAzar, 7)), semana(analitica.mejorSemanaBruta(diasAlAzar, 7)));
+probar("las dos dan lo mismo con k = 1000", semana(analitica.mejorSemana(diasAlAzar, 1000)), semana(analitica.mejorSemanaBruta(diasAlAzar, 1000)));
+
+console.time("fuerza bruta, k = 7");
+analitica.mejorSemanaBruta(diasAlAzar, 7);
+console.timeEnd("fuerza bruta, k = 7");
+console.time("ventana deslizante, k = 7");
+analitica.mejorSemana(diasAlAzar, 7);
+console.timeEnd("ventana deslizante, k = 7");
+console.time("fuerza bruta, k = 1000");
+analitica.mejorSemanaBruta(diasAlAzar, 1000);
+console.timeEnd("fuerza bruta, k = 1000");
+console.time("ventana deslizante, k = 1000");
+analitica.mejorSemana(diasAlAzar, 1000);
+console.timeEnd("ventana deslizante, k = 1000");
+
+console.log("\nPar mas cercano al presupuesto");
+probar("presupuesto 100.000", nombres(analitica.parMasCercano(catalogo, 100000)), "Filtros de papel x100 y Origen Huila 1 kg");
+probar("presupuesto 140.000", nombres(analitica.parMasCercano(catalogo, 140000)), "Origen Sierra 500 g y Prensa francesa");
+probar("presupuesto 40.000, sin solucion", nombres(analitica.parMasCercano(catalogo, 40000)), null);
+probar("catalogo vacio", nombres(analitica.parMasCercano([], 100000)), null);
+probar("un solo producto", nombres(analitica.parMasCercano([catalogo[0]], 100000)), null);
+const par = analitica.parMasCercano(catalogo, 100000);
+probar("no supera el presupuesto", par[0].precio + par[1].precio <= 100000, true);
+probar("el catalogo no cambia de orden", catalogo[0].producto, "Origen Nariño 250 g");
